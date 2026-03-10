@@ -76,23 +76,23 @@ public class Graph {
         }
     }
 
-    public Localisation[] determinerZoneInondee(long[] idsDepart, double epsilon) {
-        // TODO
+    public Localisation[] determinerZoneInondee(long[] idsOrigin, double epsilon) {
+        // TODO: On va écrire la logique ici bientôt !
         return null ;
     }
 
-    public Deque<Localisation> trouverCheminLePlusCourtPourContournerLaZoneInondee(long idDepart, long idArrivee, Localisation[] zoneInondee) {
-        // TODO
+    public Deque<Localisation> trouverCheminLePlusCourtPourContournerLaZoneInondee(long idOrigin, long idDestination, Localisation[] floodedZone) {
+        // TODO: On va écrire la logique ici bientôt !
         return null ;
     }
 
-    public Map<Localisation, Double> determinerChronologieDeLaCrue(long[] idsDepart, double vWaterInit, double k) {
-        // TODO
+    public Map<Localisation,Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit,double k) {
+        // TODO: On va écrire la logique ici bientôt !
         return null ;
     }
 
-    public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idDepart, long idEvacuation, double vVehicule, Map<Localisation, Double> tFlood) {
-        // TODO
+    public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idOrigin, long idEvacuation, double vVehicule, Map<Localisation,Double> tFlood) {
+        // TODO: On va écrire la logique ici bientôt !
         return null ;
     }
 }
