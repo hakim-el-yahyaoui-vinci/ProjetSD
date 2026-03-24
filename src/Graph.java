@@ -174,13 +174,9 @@ public class Graph {
     }
 
     public Map<Localisation, Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit, double k) {
-
-
-        Map<Localisation, Double> tFlood = new LinkedHashMap<>();
-
+        Map<Localisation, Double> tFlood = new HashMap<>();
 
         PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e[1]));
-
 
         for (long id : idsOrigin) {
             Localisation loc = this.noeuds.get(id);
@@ -196,34 +192,37 @@ public class Graph {
             double currentTime = current[1];
             double currentVWater = current[2];
 
-
             Localisation currentLoc = this.noeuds.get(currentId);
-            if (tFlood.get(currentLoc) < currentTime) continue;
 
+            // Correction : comparaison explicite avec double primitif
+            Double bestTime = tFlood.get(currentLoc);
+            if (bestTime == null || bestTime < currentTime - 1e-9) continue;
 
             for (Arc arc : this.ruesSortantes.get(currentId)) {
                 Localisation voisin = arc.getArrivee();
 
-
                 double pente = (currentLoc.getAltitude() - voisin.getAltitude()) / arc.getDistance();
                 double nouvelleVWater = currentVWater + (k * pente);
 
-
                 if (nouvelleVWater <= 0) continue;
-
 
                 double temps = arc.getDistance() / nouvelleVWater;
                 double nouveauTemps = currentTime + temps;
 
-
-                if (!tFlood.containsKey(voisin) || nouveauTemps < tFlood.get(voisin)) {
+                Double voisinTime = tFlood.get(voisin);
+                if (voisinTime == null || nouveauTemps < voisinTime) {
                     tFlood.put(voisin, nouveauTemps);
                     pq.add(new double[]{voisin.getId(), nouveauTemps, nouvelleVWater});
                 }
             }
         }
 
-        return tFlood;
+        Map<Localisation, Double> tFloodSorted = new LinkedHashMap<>();
+        tFlood.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .forEach(e -> tFloodSorted.put(e.getKey(), e.getValue()));
+
+        return tFloodSorted;
     }
 
     public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idOrigin, long idEvacuation, double vVehicule, Map<Localisation,Double> tFlood) {
