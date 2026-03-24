@@ -1,10 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.Deque;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 public class Graph {
 
@@ -88,9 +84,59 @@ public class Graph {
         return null ;
     }
 
-    public Map<Localisation,Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit,double k) {
-        // TODO: On va écrire la logique ici bientôt !
-        return null ;
+    public Map<Localisation, Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit, double k) {
+
+        // Map résultat : localisation -> temps d'inondation
+        // LinkedHashMap pour garder l'ordre d'insertion (ordre croissant grâce à Dijkstra)
+        Map<Localisation, Double> tFlood = new LinkedHashMap<>();
+
+        // Pour Dijkstra : PriorityQueue sur le temps (le plus petit temps en premier)
+        // Chaque entrée : [id du noeud, temps actuel, vitesse actuelle de l'eau]
+        PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e[1]));
+
+        // Initialisation avec les points de départ
+        for (long id : idsOrigin) {
+            Localisation loc = this.noeuds.get(id);
+            if (loc != null) {
+                pq.add(new double[]{id, 0.0, vWaterInit});
+                tFlood.put(loc, 0.0);
+            }
+        }
+
+        while (!pq.isEmpty()) {
+            double[] current = pq.poll();
+            long currentId = (long) current[0];
+            double currentTime = current[1];
+            double currentVWater = current[2];
+
+            // Si on a déjà trouvé un meilleur chemin, on skip
+            Localisation currentLoc = this.noeuds.get(currentId);
+            if (tFlood.get(currentLoc) < currentTime) continue;
+
+            // On explore les voisins
+            for (Arc arc : this.ruesSortantes.get(currentId)) {
+                Localisation voisin = arc.getArrivee();
+
+                // Calcul de la pente et nouvelle vitesse
+                double pente = (currentLoc.getAltitude() - voisin.getAltitude()) / arc.getDistance();
+                double nouvelleVWater = currentVWater + (k * pente);
+
+                // Condition : l'eau s'arrête si vitesse <= 0
+                if (nouvelleVWater <= 0) continue;
+
+                // Calcul du temps pour atteindre ce voisin
+                double temps = arc.getDistance() / nouvelleVWater;
+                double nouveauTemps = currentTime + temps;
+
+                // On met à jour si on a trouvé un chemin plus rapide
+                if (!tFlood.containsKey(voisin) || nouveauTemps < tFlood.get(voisin)) {
+                    tFlood.put(voisin, nouveauTemps);
+                    pq.add(new double[]{voisin.getId(), nouveauTemps, nouvelleVWater});
+                }
+            }
+        }
+
+        return tFlood;
     }
 
     public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idOrigin, long idEvacuation, double vVehicule, Map<Localisation,Double> tFlood) {
