@@ -1,10 +1,9 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.Deque;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Graph {
 
@@ -79,8 +78,36 @@ public class Graph {
     }
 
     public Localisation[] determinerZoneInondee(long[] idsOrigin, double epsilon) {
-        // TODO: On va écrire la logique ici bientôt !
-        return null ;
+        List<Localisation> zoneInondee = new ArrayList<>();
+
+        Set<Long> dejaVisite = new HashSet<>();
+
+        Deque<Localisation> file = new ArrayDeque<>();
+
+        for (long id : idsOrigin) {
+            Localisation depart = noeuds.get(id);
+            if (depart != null && dejaVisite.add(id)) {
+                file.add(depart);
+                zoneInondee.add(depart);
+            }
+        }
+
+        while (!file.isEmpty()) {
+            Localisation courant = file.poll();
+
+            for (Arc arc : ruesSortantes.get(courant.getId())) {
+                Localisation voisin = arc.getArrivee();
+
+                boolean peutPropager = voisin.getAltitude() <= courant.getAltitude() + epsilon;
+
+                if (peutPropager && dejaVisite.add(voisin.getId())) {
+                    file.add(voisin);
+                    zoneInondee.add(voisin);
+                }
+            }
+        }
+
+        return zoneInondee.toArray(new Localisation[0]);
     }
 
     public Deque<Localisation> trouverCheminLePlusCourtPourContournerLaZoneInondee(long idOrigin, long idDestination, Localisation[] floodedZone) {
