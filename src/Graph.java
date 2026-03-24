@@ -166,9 +166,57 @@ public class Graph {
             return chemin;
     }
 
-    public Map<Localisation,Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit,double k) {
-        // TODO: On va écrire la logique ici bientôt !
-        return null ;
+    public Map<Localisation, Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit, double k) {
+
+
+        Map<Localisation, Double> tFlood = new LinkedHashMap<>();
+
+
+        PriorityQueue<double[]> pq = new PriorityQueue<>(Comparator.comparingDouble(e -> e[1]));
+
+
+        for (long id : idsOrigin) {
+            Localisation loc = this.noeuds.get(id);
+            if (loc != null) {
+                pq.add(new double[]{id, 0.0, vWaterInit});
+                tFlood.put(loc, 0.0);
+            }
+        }
+
+        while (!pq.isEmpty()) {
+            double[] current = pq.poll();
+            long currentId = (long) current[0];
+            double currentTime = current[1];
+            double currentVWater = current[2];
+
+
+            Localisation currentLoc = this.noeuds.get(currentId);
+            if (tFlood.get(currentLoc) < currentTime) continue;
+
+
+            for (Arc arc : this.ruesSortantes.get(currentId)) {
+                Localisation voisin = arc.getArrivee();
+
+
+                double pente = (currentLoc.getAltitude() - voisin.getAltitude()) / arc.getDistance();
+                double nouvelleVWater = currentVWater + (k * pente);
+
+
+                if (nouvelleVWater <= 0) continue;
+
+
+                double temps = arc.getDistance() / nouvelleVWater;
+                double nouveauTemps = currentTime + temps;
+
+
+                if (!tFlood.containsKey(voisin) || nouveauTemps < tFlood.get(voisin)) {
+                    tFlood.put(voisin, nouveauTemps);
+                    pq.add(new double[]{voisin.getId(), nouveauTemps, nouvelleVWater});
+                }
+            }
+        }
+
+        return tFlood;
     }
 
     public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idOrigin, long idEvacuation, double vVehicule, Map<Localisation,Double> tFlood) {
