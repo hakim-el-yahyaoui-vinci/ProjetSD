@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.*;
-import java.util.ArrayDeque;
-import java.util.HashSet;
-import java.util.Set;
+
 
 public class Graph {
 
@@ -111,8 +109,61 @@ public class Graph {
     }
 
     public Deque<Localisation> trouverCheminLePlusCourtPourContournerLaZoneInondee(long idOrigin, long idDestination, Localisation[] floodedZone) {
-        // TODO: On va écrire la logique ici bientôt !
-        return null ;
+
+            Set<Long> inondee = new HashSet<>();
+            for (Localisation loc : floodedZone) {
+                inondee.add(loc.getId());
+            }
+
+            Localisation depart = noeuds.get(idOrigin);
+            Localisation destination = noeuds.get(idDestination);
+            if (depart == null || destination == null) return new ArrayDeque<>();
+
+            Map<Long, Long> predecesseur = new HashMap<>();
+            Set<Long> vus = new HashSet<>();
+            Queue<Localisation> file = new LinkedList<>();
+
+            if (inondee.contains(idOrigin)) return new ArrayDeque<>();
+
+            vus.add(idOrigin);
+            predecesseur.put(idOrigin, null);
+            file.add(depart);
+
+            boolean trouve = false;
+
+            while (!file.isEmpty() && !trouve) {
+                Localisation courant = file.poll();
+
+                List<Arc> voisins = ruesSortantes.get(courant.getId());
+                if (voisins == null) continue;
+
+                for (Arc arc : voisins) {
+                    Localisation voisin = arc.getArrivee();
+                    long idVoisin = voisin.getId();
+
+                    if (!vus.contains(idVoisin) && !inondee.contains(idVoisin)) {
+                        vus.add(idVoisin);
+                        predecesseur.put(idVoisin, courant.getId());
+                        file.add(voisin);
+
+                        if (idVoisin == idDestination) {
+                            trouve = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!predecesseur.containsKey(idDestination)) return new ArrayDeque<>();
+
+            Deque<Localisation> chemin = new ArrayDeque<>();
+            Long courantId = idDestination;
+            while (courantId != null) {
+                chemin.addFirst(noeuds.get(courantId));
+                courantId = predecesseur.get(courantId);
+            }
+
+            return chemin;
     }
 
     public Map<Localisation,Double> determinerChronologieDeLaCrue(long[] idsOrigin, double vWaterInit,double k) {
