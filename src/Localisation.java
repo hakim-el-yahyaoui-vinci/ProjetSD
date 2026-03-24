@@ -49,4 +49,16 @@ public class Localisation {
     public void setAltitude(double altitude) {
         this.altitude = altitude;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Localisation)) return false;
+        return this.id == ((Localisation) o).id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(this.id);
+    }
 }

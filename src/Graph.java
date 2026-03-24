@@ -19,6 +19,7 @@ public class Graph {
 
         try {
             BufferedReader lecteurNoeuds = new BufferedReader(new FileReader(localisations));
+            lecteurNoeuds.readLine();
             String ligneNoeud;
 
             while ((ligneNoeud = lecteurNoeuds.readLine()) != null) {
@@ -26,10 +27,10 @@ public class Graph {
                 String[] morceaux = ligneNoeud.split(",");
 
                 if (morceaux.length >= 5) {
-                    long id = Long.parseLong(morceaux[0]);
-                    double lat = Double.parseDouble(morceaux[1]);
-                    double lon = Double.parseDouble(morceaux[2]);
-                    String nom = morceaux[3];
+                    long id    = Long.parseLong(morceaux[0]);
+                    String nom = morceaux[1];
+                    double lat = Double.parseDouble(morceaux[2]);
+                    double lon = Double.parseDouble(morceaux[3]);
                     double alt = Double.parseDouble(morceaux[4]);
 
                     Localisation nouveauPoint = new Localisation(id, lat, lon, nom, alt);
@@ -47,6 +48,7 @@ public class Graph {
 
         try {
             BufferedReader lecteurArcs = new BufferedReader(new FileReader(roads));
+            lecteurArcs.readLine();
             String ligneArc;
 
             while ((ligneArc = lecteurArcs.readLine()) != null) {
