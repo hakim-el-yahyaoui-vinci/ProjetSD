@@ -117,13 +117,18 @@ public class Graph {
 
             Localisation depart = noeuds.get(idOrigin);
             Localisation destination = noeuds.get(idDestination);
-            if (depart == null || destination == null) return new ArrayDeque<>();
+
+            if (depart == null || destination == null) {
+            throw new RuntimeException("Pas de chemin de " + idOrigin + " à " + idDestination + " évitant la zone inondée.");
+            }
 
             Map<Long, Long> predecesseur = new HashMap<>();
             Set<Long> vus = new HashSet<>();
             Queue<Localisation> file = new LinkedList<>();
 
-            if (inondee.contains(idOrigin)) return new ArrayDeque<>();
+            if (inondee.contains(idOrigin)) {
+            throw new RuntimeException("Pas de chemin de " + idOrigin + " à " + idDestination + " évitant la zone inondée.");
+            }
 
             vus.add(idOrigin);
             predecesseur.put(idOrigin, null);
@@ -154,7 +159,9 @@ public class Graph {
                 }
             }
 
-            if (!predecesseur.containsKey(idDestination)) return new ArrayDeque<>();
+            if (!predecesseur.containsKey(idDestination)) {
+            throw new RuntimeException("Pas de chemin de " + idOrigin + " à " + idDestination + " évitant la zone inondée.");
+            }
 
             Deque<Localisation> chemin = new ArrayDeque<>();
             Long courantId = idDestination;
@@ -220,7 +227,64 @@ public class Graph {
     }
 
     public Deque<Localisation> trouverCheminDEvacuationLePlusCourt(long idOrigin, long idEvacuation, double vVehicule, Map<Localisation,Double> tFlood) {
-        // TODO: On va écrire la logique ici bientôt !
-        return null ;
+
+        Map<Long, Double> tFloodById = new HashMap<>();
+        for (Map.Entry<Localisation, Double> entry : tFlood.entrySet()) {
+            tFloodById.put(entry.getKey().getId(), entry.getValue());
+        }
+
+        Localisation depart = noeuds.get(idOrigin);
+
+        if (depart == null) {
+            throw new RuntimeException("Pas de chemin de " + idOrigin + " à " + idEvacuation + " évitant la zone inondée.");
+        }
+
+        Map<Long, Double> dist = new HashMap<>();
+        Map<Long, Long> predecesseur = new HashMap<>();
+        PriorityQueue<long[]> pq = new PriorityQueue<>(Comparator.comparingDouble(a -> Double.longBitsToDouble(a[1])));
+
+        dist.put(idOrigin, 0.0);
+        predecesseur.put(idOrigin, null);
+        pq.offer(new long[]{idOrigin, Double.doubleToLongBits(0.0)});
+
+        while (!pq.isEmpty()) {
+            long[] entry = pq.poll();
+            long courantId = entry[0];
+            double tCourant = Double.longBitsToDouble(entry[1]);
+
+            if (tCourant > dist.getOrDefault(courantId, Double.MAX_VALUE)) continue;
+            if (courantId == idEvacuation) break;
+
+            List<Arc> voisins = ruesSortantes.get(courantId);
+            if (voisins == null) continue;
+
+            for (Arc arc : voisins) {
+                Localisation voisin = arc.getArrivee();
+                long idVoisin = voisin.getId();
+                double tArrivee = tCourant + arc.getDistance() / vVehicule;
+
+                Double tInondation = tFloodById.get(idVoisin);
+                if (tInondation != null && tArrivee >= tInondation) continue;
+
+                if (tArrivee < dist.getOrDefault(idVoisin, Double.MAX_VALUE)) {
+                    dist.put(idVoisin, tArrivee);
+                    predecesseur.put(idVoisin, courantId);
+                    pq.offer(new long[]{idVoisin, Double.doubleToLongBits(tArrivee)});
+                }
+            }
+        }
+
+        if (!predecesseur.containsKey(idEvacuation)) {
+            throw new RuntimeException("Pas de chemin de " + idOrigin + " à " + idEvacuation + " évitant la zone inondée.");
+        }
+
+        Deque<Localisation> chemin = new ArrayDeque<>();
+        Long courantId = idEvacuation;
+        while (courantId != null) {
+            chemin.addFirst(noeuds.get(courantId));
+            courantId = predecesseur.get(courantId);
+        }
+
+        return chemin;
     }
 }
